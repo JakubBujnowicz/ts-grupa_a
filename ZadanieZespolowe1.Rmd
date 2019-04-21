@@ -1,0 +1,23 @@
+---
+title: "Prognoza stopy bezrobobocia w Polsce na podstawie danych GUS"
+author: 'Grupa A: Izabela Stobiecka, Anita Księżak, Sandra Sobór, Jakub Bujnowicz'
+date: "21 kwietnia 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RColorBrewer)
+library(forecast)
+library(tseries)
+rok <- 2019
+```
+Celem poniższego dokumentu jest analiza danych dotyczących stopy bezrobocia w Polsce na podstawie danych GUS i prognoza wysokości stopy na rok `r rok`.
+
+## Wczytanie danych
+```{r}
+dane <- read.csv2("dane/bezrobocie.csv")
+dane
+```
+
+
