@@ -7,17 +7,21 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyr)
 library(RColorBrewer)
 library(forecast)
 library(tseries)
+library(rvest)
 rok <- 2019
 ```
 Celem poniższego dokumentu jest analiza danych dotyczących stopy bezrobocia w Polsce na podstawie danych GUS i prognoza wysokości stopy na rok `r rok`.
 
 ## Wczytanie danych
 ```{r}
-dane <- read.csv2("dane/bezrobocie.csv")
-dane
+dane <- read_html("https://stat.gov.pl/obszary-tematyczne/rynek-pracy/bezrobocie-rejestrowane/stopa-bezrobocia-rejestrowanego-w-latach-1990-2019,4,1.html")
+dane1 <- html_table(dane, dec = ",")
+dane2 <- dane1[[1]]
+
 ```
 
 
