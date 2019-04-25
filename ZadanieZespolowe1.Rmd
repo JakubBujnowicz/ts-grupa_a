@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, include=FALSE}
 library(tidyr)
 library(RColorBrewer)
 library(forecast)
@@ -22,10 +22,43 @@ bezrobocie_typ <- "b"
 Celem poniższego dokumentu jest analiza danych dotyczących stopy bezrobocia w Polsce na podstawie danych GUS i prognoza wysokości stopy na rok `r rok`.
 
 ## Wczytanie danych
+Dane zostały wczytane i odpowiednio zmodyfikowane w oddzielnym R skrypcie. Tabela została wyodrębniona ze strony z usunięciem niepotrzebnych znaków, ujednoliceniem separatora dziesiętnego i dodaniem możliwości wyboru wariantu w roku 2002:
+
+w wariancie "a"- dane według wyników z Powszechnego Spisu Rolnego 1996,
+
+w wariancie "b"- dane według wyników z Narodowego Spisu Powszechnego Ludności i Mieszkań oraz Powszechnego Spisu Rolnego 2002
+
+W naszych rozważaniach domyślnie weźmiemy pod uwagę wariant "b".
+
+Tabela została również przekształcona do postaci długiej. W ten sposób otrzymaliśmy ramkę danych złożoną z czterech kolumn- Rok, Miesiąc, Wartość i MiesiącInt (miesiąc w postaci liczby całkowitej)
+
 ```{r}
 dane <- readRDS(paste0("dane/bezrobocie_",
                        bezrobocie_typ,
                        ".rds"))
+tail(dane)
 ```
+## Podstawowe wykresy
+Zdefiniujmy szereg czasowy opisujący nasze zjawisko i narysujmy dla niego podstawowe wykresy
+```{r}
+bezrobocie <- ts(dane$Wartość[length(dane$Wartość):1])
+head(bezrobocie)
+```
+```{r}
+tsdisplay(bezrobocie)
+```
+
+Widzimy, że nasz szereg nie jest stacjonarny. Przyjrzyjmy się mu dokładniej:
+```{r}
+plot(bezrobocie, main = "Stopa bezrobocia", col = brewer.pal(n = 4, name = "PRGn")[1], xaxt = "n")
+axis(1,at = seq(1,360,12),labels = unique(dane$Rok)[length(unique(dane$Rok)):1])
+```
+Możemy zauważyć na wykresie pewne trendy (?) jak i sezonowość. Narysujmy wykres dla trzech lat- 2012, 2013 i 2014 aby lepiej zaobserwować sezonowość:
+```{r}
+bezrobocie1214 <- bezrobocie[(13*12):(13*12 + 3*12)]
+plot(bezrobocie1214,main = "Stopa bezrobocia w latach 2012-2014", col = brewer.pal(n = 4, name = "PRGn")[1], type = "l", xaxt = "n", xlab = "Miesiąc", ylab = "Bezrobocie")
+axis(1,at = 1:36,labels = rep(dane$Miesiąc[360:349],3)) 
+```
+
 
 
