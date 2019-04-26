@@ -33,9 +33,9 @@ unemployment <- data_extract %>%
         Wartość = as.numeric(Wartość)) %>%
     rename(Rok = `rok/miesiąc`) %>%
     mutate(
-        Rok = substr(Rok, 1, 4),
+        Rok = as.integer(substr(Rok, 1, 4)),
         MiesiącInt = match(Miesiąc, unique(Miesiąc))) %>%
-    arrange(desc(Rok), desc(MiesiącInt))
+    arrange(Rok, MiesiącInt)
 
 # Zapisywanie
 if (save_csv) {
