@@ -71,8 +71,6 @@ Ustalmy zmienną frequency - liczbę obserwacji na jednostkę czasu.
 f <- 12
 ```
 
-[comment]: <> (?Czytam wartości p i q tutaj, czy już po zróżnicowaniu?)
-
 Ponieważ analizować będziemy dane z okresu `r rokStart` do `r rokStop` 
 przekształćmy odpowienio dane, definiując szereg czasowy opisujący nasze 
 zjawisko. Następnie narysujmy dla niego podstawowe wykresy. 
