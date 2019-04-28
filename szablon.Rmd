@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(RColorBrewer)
 library(forecast)
+
+source("R/ocena_prognozy.R", encoding = "UTF8")
 ```
 
 Celem poniższego dokumentu jest analiza danych dotyczących stopy bezrobocia w 
@@ -34,8 +36,8 @@ przeprowadzimy analizę.
 
 ```{r}
 bezrobocie_typ <- "b"
-rokStart <- 1990
-rokStop <- 2019
+rokStart <- 2010
+rokStop <- 2018
 ```
 
 
@@ -53,8 +55,6 @@ dane <- readRDS(paste0("dane/bezrobocie_",
 tail(dane)
 ```
 
-Ponieważ analizować będziemy dane z okresu `r rokStart` do `r rokStop` 
-przekształćmy odpowienio dane. 
 
 ## Podstawowe wykresy
 
@@ -66,9 +66,9 @@ f <- 12
 
 [comment]: <> (?Czytam wartości p i q tutaj, czy już po zróżnicowaniu?)
 
-Zdefiniujmy szereg czasowy opisujący nasze zjawisko i narysujmy dla niego 
-podstawowe wykresy:
-
+Ponieważ analizować będziemy dane z okresu `r rokStart` do `r rokStop` 
+przekształćmy odpowienio dane, definiując szereg czasowy opisujący nasze 
+zjawisko. Następnie narysujmy dla niego podstawowe wykresy. 
 ```{r}
 bezrobocie <- ts(dane$Wartosc, 
                  start = c(rokStart, 1), 
@@ -157,7 +157,7 @@ q-pierwszych zmiennych na wykresie ACF jako istotnie róznych od zera
 sugeruje rozwazenie modelu MA(q), zatem na posdtawie wykresu ACF dla 
 niezróżnicowanych danych wnioskujemy, że q = `r q`.
 
-```{r}
+```{r ma}
 ma <- Arima(uczacy, order = c(0, d, q))
 summary(ma)
 ```
@@ -166,7 +166,7 @@ W modelach **AR**(p) funkcja PACF przyjmuje wartości istotnie różne od 0
 wyłącznie dla $k \leq p$. Stąd to właśnie
 tę funkcję stosujemy przy badaniu zasadnosci modelu. 
 
-```{r}
+```{r ar}
 ar <- Arima(uczacy, order = c(p, d, 0))
 summary(ar)
 ```
@@ -179,8 +179,11 @@ integrated moving average - autoregresyjny (**AR**) (AR zintegrowany (**I**)
 model średniej ruchomej (**MA**)). W celu analizy danych skorzystamy z funkcji 
 `auto.arima()` z pakietu `forecast`.
 
-```{r}
-arima <- auto.arima(uczacy, d = d)
+```{r arima}
+arima <- auto.arima(uczacy, 
+                    d = d,
+                    stepwise = FALSE,
+                    approximation = FALSE)
 summary(arima)
 ```
 
@@ -188,8 +191,12 @@ Dodatkowo stworzony zostanie czwarty model, który wykorzysta
 **transformację Boxa-Coxa** z samodzielnie wygenerowanym parametrem lambda. 
 Będziemy mogli zweryfikować czy wniesie ona znaczącą poprawę do predykcji.
 
-```{r}
-arima_bc <- auto.arima(uczacy, d = d, lambda = "auto")
+```{r arima_box_cox}
+arima_bc <- auto.arima(uczacy, 
+                       d = d, 
+                       lambda = "auto",
+                       stepwise = FALSE,
+                       approximation = FALSE)
 summary(arima_bc)
 ```
 
@@ -209,7 +216,7 @@ predykcje <- lapply(modele, function(x) forecast(x, h = length(treningowy)))
 
 Zobaczmy jak nasze predykcje wyglądają na wykresach:
 
-```{r}
+```{r, fig.height = 10}
 par(mfrow = c(4, 1))
 for (i in 1:4) {
     plot(predykcje[[i]], col = c(brewer.pal(n = 4, name = "PRGn")[1]))
@@ -218,11 +225,11 @@ for (i in 1:4) {
 par(mfrow = c(1, 1))
 ```
 
-Trudno dostrzedz na powyższych wykresach jak działają nasze modele, 
+Trudno dostrzec na powyższych wykresach jak działają nasze modele, 
 zanim zweryfikujemy je na podstawie generowanych przez nie błędów, 
 narysujmy wykresy jedynie dla predykowanego okresu
 
-```{r}
+```{r, fig.height = 10}
 par(mfrow = c(4, 1))
 for (i in 1:4) {
     plot(predykcje[[i]][["mean"]], 
@@ -236,18 +243,15 @@ for (i in 1:4) {
 par(mfrow = c(1, 1))
 ```
 
-Porównajmy teraz pierwiastki z błędów średniokwadratowych (RMSE).
+Porównajmy teraz pierwiastki z błędów średniokwadratowych (RMSE) oraz statystykę
+Theila.
 ```{r}
-rmse <- function(rzeczywiste, predykcja) {
-    blad <- sqrt(mean((rzeczywiste - predykcja) ^ 2))
-    return(blad)
-}
+bledy <- sapply(predykcje, function(x) rmse(treningowy, x$mean))
+wyniki_theil <- sapply(predykcje, function(x) theil(treningowy, x$mean))
+podsumowanie <- data.frame(bledy = bledy, 
+                           theil = wyniki_theil)
+podsumowanie
 
-wartosci <- as.numeric(treningowy)
-predykcje_r <- lapply(predykcje, function(x) as.numeric(x$mean))
-
-bledy <- sapply(predykcje_r, function(x) rmse(wartosci, x))
-bledy
 ```
 
 [comment]: <> (Wnioski z predykcji)
