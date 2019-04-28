@@ -34,9 +34,9 @@ unemployment <- data_extract %>%
     rename(Rok = `rok/miesiąc`) %>%
     mutate(
         Rok = as.integer(substr(Rok, 1, 4)),
-        MiasiacInt = match(Miesiac, unique(Miesiac))) %>%
-    arrange(Rok, MiasiacInt) %>%
-    na_omit() %>%
+        MiesiacInt = match(Miesiac, unique(Miesiac))) %>%
+    arrange(Rok, MiesiacInt) %>%
+    na.omit() %>%
     select(Rok, Miesiac, MiesiacInt, Wartosc)
 
 # Zapisywanie
