@@ -14,7 +14,9 @@ save_rds <- TRUE
 save_csv <- FALSE
 
 # Możliwe "a"/"b" - ważne dla roku 2002
-data_option <- "b"
+data_option <- ifelse(exists("bezrobocie_typ"),
+                      yes = bezrobocie_typ,
+                      no = "b")
 
 # Kod ##########################################################################
 data_extract <- read_html(website_path) %>%
