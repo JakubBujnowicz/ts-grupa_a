@@ -29,7 +29,7 @@ w wariancie "a"- dane według wyników z Powszechnego Spisu Rolnego 1996,
 w wariancie "b"- dane według wyników z Narodowego Spisu Powszechnego Ludności 
 i Mieszkań oraz Powszechnego Spisu Rolnego 2002
 
-Ustalmy wariant, który weźmiemy pod uwagę ora zakres lat, dla których 
+Ustalmy wariant, który weźmiemy pod uwagę oraz zakres lat, dla których 
 przeprowadzimy analizę.
 
 ```{r}
@@ -80,17 +80,6 @@ tsdisplay(bezrobocie, main = "Bezrobocie w badanym okresie",
           col = brewer.pal(n = 4, name = "PRGn")[1])
 ```
 
-Wprowadźmy parametr q, który odpowiada wartościom istotnie róznym od zera na 
-wykresie ACF oraz parametr p, który odpowiada wartościom istotnie róznym od 
-zera na wykresie PACF. Potrkatujmy je chwilowo jako "czarną skrzynkę". Okażą 
-się one przydatne na dalszym etapie analizy.
-
-```{r}
-q <- 3
-p <- 2
-```
-
-
 Narysujmy wykres (za pomocą `stl()`) z którego wprost odczytamy oryginalne 
 dane, trend, sezonowość i resztę.
 
@@ -107,8 +96,6 @@ i sezonowość. Dodatkowo możemy wyciągnąć wnioski dotyczące stacjonarnośc
 Znając podstawowe własności analizowanego szeregu przejdźmy do dalszej - 
 dokładniejszej analizy.
 
-## AR, MA, ARMA, ARIMA
-
 Aby analiza była dokładniejsza (szereg posiadał cechy słabej stacjonarności) 
 zróżnicujmy eksplorowane dane.
 ```{r}
@@ -119,47 +106,18 @@ head(nsc)
 Narysujmy wykresy przestawiające zróżnicowane dane.
 
 ```{r}
-tsdisplay(nsc)
+tsdisplay(nsc, col = brewer.pal(n = 4, name = "PRGn")[1])
 ```
 
-Przeanalizujmy dane korzystając z grupy modeli AR, MA, ARMA, ARIMA. Opisy 
-dotyczące modeli pochodzą bezpośrednio ze 
-[skryptu](https://github.com/PiotrMaciejKowalski/ts-r/tree/master/skrypt) 
-dla przedmiotu Szeregi czasowe i prognozowanie w biznesie 2018/19.
-
-Modele **MA** są wyraźnie obserwowalne na wykresach ACF. Wykazują na nich 
-szybą zbieżność do wartości nieistotnie różnych od 0. Wystepowanie 
-q-pierwszych zmiennych na wykresie ACF jako istotnie róznych od zera
-sugeruje rozwazenie modelu MA(q), zatem na posdtawie wykresu ACF dla 
-niezróżnicowanych danych wnioskujemy, że q = `r q`.
+Wprowadźmy parametr q, który odpowiada wartościom istotnie róznym od zera na 
+wykresie ACF oraz parametr p, który odpowiada wartościom istotnie róznym od 
+zera na wykresie PACF. Potrkatujmy je chwilowo jako "czarną skrzynkę". Okażą 
+się one przydatne na dalszym etapie analizy.
 
 ```{r}
-ma <- Arima(nsc, order = c(0, 0, q))
-summary(ma)
+q <- 3
+p <- 2
 ```
-
-W modelach **AR**(p) funkcja PACF przyjmuje wartości istotnie różne od 0 
-wyłącznie dla $k \leq p$. Stąd to właśnie
-tę funkcję stosujemy przy badaniu zasadnosci modelu. 
-
-```{r}
-ar <- Arima(nsc, order = c(p, 0, 0))
-summary(ar)
-```
-
-W badaniu procesów **ARMA** wykresy ACF oraz PACF nie wnoszą 
-istotnych informacji. Brak informacji płynącej z wykresów ACF i PACF przy 
-jednoczesnym przekonaniu o stacjonarności jest sygnałem do rozważenia modelu
-ARMA. Zajmijmy się więc analizą modelu **ARIMA** (ang. Autoregressive 
-integrated moving average - autoregresyjny (**AR**) (AR zintegrowany (**I**) 
-model średniej ruchomej (**MA**)). W celu analizy danych skorzystamy z funkcji 
-`auto.arima()` z pakietu `forecast`.
-
-```{r}
-arima <- auto.arima(nsc)
-summary(arima)
-```
-
 
 ## Podział na zbiór treningowy i testowy.
 
@@ -174,3 +132,122 @@ treningowy <- window(bezrobocie,
 ```
 
 Wspólny wykres:
+```{r}
+ts.plot(uczacy, treningowy, col = c(brewer.pal(n = 4, name = "PRGn")[1], "red"))
+```
+
+## AR, MA, ARMA, ARIMA
+
+Przeanalizujmy dane korzystając z grupy modeli AR, MA, ARMA, ARIMA. Opisy 
+dotyczące modeli pochodzą bezpośrednio ze 
+[skryptu](https://github.com/PiotrMaciejKowalski/ts-r/tree/master/skrypt) 
+dla przedmiotu Szeregi czasowe i prognozowanie w biznesie 2018/19.
+
+Z faktu, że analiza będzie przeprowadzona na szeregu zróżnicowanym, 
+wprowadźmy parametr d, który wykorzystamy przy tworzeniu modeli.
+
+```{r}
+d <- 1
+```
+
+
+Modele **MA** są wyraźnie obserwowalne na wykresach ACF. Wykazują na nich 
+szybą zbieżność do wartości nieistotnie różnych od 0. Wystepowanie 
+q-pierwszych zmiennych na wykresie ACF jako istotnie róznych od zera
+sugeruje rozwazenie modelu MA(q), zatem na posdtawie wykresu ACF dla 
+niezróżnicowanych danych wnioskujemy, że q = `r q`.
+
+```{r}
+ma <- Arima(uczacy, order = c(0, d, q))
+summary(ma)
+```
+
+W modelach **AR**(p) funkcja PACF przyjmuje wartości istotnie różne od 0 
+wyłącznie dla $k \leq p$. Stąd to właśnie
+tę funkcję stosujemy przy badaniu zasadnosci modelu. 
+
+```{r}
+ar <- Arima(uczacy, order = c(p, d, 0))
+summary(ar)
+```
+
+W badaniu procesów **ARMA** wykresy ACF oraz PACF nie wnoszą 
+istotnych informacji. Brak informacji płynącej z wykresów ACF i PACF przy 
+jednoczesnym przekonaniu o stacjonarności jest sygnałem do rozważenia modelu
+ARMA. Zajmijmy się więc analizą modelu **ARIMA** (ang. Autoregressive 
+integrated moving average - autoregresyjny (**AR**) (AR zintegrowany (**I**) 
+model średniej ruchomej (**MA**)). W celu analizy danych skorzystamy z funkcji 
+`auto.arima()` z pakietu `forecast`.
+
+```{r}
+arima <- auto.arima(uczacy, d = d)
+summary(arima)
+```
+
+Dodatkowo stworzony zostanie czwarty model, który wykorzysta 
+**transformację Boxa-Coxa** z samodzielnie wygenerowanym parametrem lambda. 
+Będziemy mogli zweryfikować czy wniesie ona znaczącą poprawę do predykcji.
+
+```{r}
+arima_bc <- auto.arima(uczacy, d = d, lambda = "auto")
+summary(arima_bc)
+```
+
+
+Dokonajmy teraz predykcji na zbiorze treningowym, aby móc potem rozstrzygnąć, 
+który z modeli najlepiej radzi sobie z naszymi danymi.
+
+```{r}
+modele <- list(ma = ma,
+               ar = ar,
+               arima = arima,
+               box_cox = arima_bc)
+
+predykcje <- lapply(modele, function(x) forecast(x, h = length(treningowy)))
+
+```
+
+Zobaczmy jak nasze predykcje wyglądają na wykresach:
+
+```{r}
+par(mfrow = c(4, 1))
+for (i in 1:4) {
+    plot(predykcje[[i]], col = c(brewer.pal(n = 4, name = "PRGn")[1]))
+    lines(treningowy, col = "red")
+}
+par(mfrow = c(1, 1))
+```
+
+Trudno dostrzedz na powyższych wykresach jak działają nasze modele, 
+zanim zweryfikujemy je na podstawie generowanych przez nie błędów, 
+narysujmy wykresy jedynie dla predykowanego okresu
+
+```{r}
+par(mfrow = c(4, 1))
+for (i in 1:4) {
+    plot(predykcje[[i]][["mean"]], 
+         col = c(brewer.pal(n = 4, name = "PRGn")[1]), 
+         ylab = paste("predykcja", i), 
+         ylim = c(min(min(predykcje[[i]][["mean"]], treningowy)), 
+                  max(predykcje[[i]][["mean"]], max(treningowy))))
+    lines(treningowy, 
+          col = "red")
+}
+par(mfrow = c(1, 1))
+```
+
+Porównajmy teraz pierwiastki z błędów średniokwadratowych (RMSE).
+```{r}
+rmse <- function(rzeczywiste, predykcja) {
+    blad <- sqrt(mean((rzeczywiste - predykcja) ^ 2))
+    return(blad)
+}
+
+wartosci <- as.numeric(treningowy)
+predykcje_r <- lapply(predykcje, function(x) as.numeric(x$mean))
+
+bledy <- sapply(predykcje_r, function(x) rmse(wartosci, x))
+bledy
+```
+
+[comment]: <> (Wnioski z predykcji)
