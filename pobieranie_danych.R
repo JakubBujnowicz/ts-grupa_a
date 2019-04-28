@@ -26,16 +26,18 @@ clear_regex <- switch(data_option,
                       "a" = "[[:cntrl:]]+[[:print:]]+|\\*")
 
 unemployment <- data_extract %>%
-    tidyr::gather("Miesiąc", "Wartość", -`rok/miesiąc`) %>%
+    tidyr::gather("Miesiac", "Wartosc", -`rok/miesiąc`) %>%
     mutate(
-        Wartość = gsub(clear_regex, "", Wartość),
-        Wartość = gsub(",", ".", Wartość),
-        Wartość = as.numeric(Wartość)) %>%
+        Wartosc = gsub(clear_regex, "", Wartosc),
+        Wartosc = gsub(",", ".", Wartosc),
+        Wartosc = as.numeric(Wartosc)) %>%
     rename(Rok = `rok/miesiąc`) %>%
     mutate(
-        Rok = substr(Rok, 1, 4),
-        MiesiącInt = match(Miesiąc, unique(Miesiąc))) %>%
-    arrange(desc(Rok), desc(MiesiącInt))
+        Rok = as.integer(substr(Rok, 1, 4)),
+        MiasiacInt = match(Miesiac, unique(Miesiac))) %>%
+    arrange(Rok, MiasiacInt) %>%
+    na_omit() %>%
+    select(Rok, Miesiac, MiesiacInt, Wartosc)
 
 # Zapisywanie
 if (save_csv) {
