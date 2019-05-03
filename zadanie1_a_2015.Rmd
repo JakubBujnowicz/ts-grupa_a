@@ -36,7 +36,7 @@ przeprowadzimy analizę.
 
 ```{r}
 bezrobocie_typ <- "b"
-rokStart <- 1990
+rokStart <- 1995
 rokStop <- 2015
 
 sciezka_pliku <- paste0("dane/bezrobocie_",
@@ -73,7 +73,9 @@ f <- 12
 
 Ponieważ analizować będziemy dane z okresu `r rokStart` do `r rokStop` 
 przekształćmy odpowienio dane, definiując szereg czasowy opisujący nasze 
-zjawisko. Następnie narysujmy dla niego podstawowe wykresy. 
+zjawisko. Dane od 1990 do początku `r rokStart` zostają pominięte w zbiorze
+uczącym, gdyż obserwujemy tam znaczny wzrost wartości, który może zaburzyć 
+naszą predykcje. Następnie narysujmy dla niego podstawowe wykresy. 
 
 ```{r}
 bezrobocie <- ts(dane$Wartosc, 
@@ -123,7 +125,7 @@ zera na wykresie PACF. Potrkatujmy je chwilowo jako "czarną skrzynkę". Okażą
 się one przydatne na dalszym etapie analizy.
 
 ```{r}
-q <- 2
+q <- 13
 p <- 5
 ```
 
@@ -137,13 +139,13 @@ naszym zbiorem testowym. Wcześniejsze dane będą zbiorem treningowym.
 ```{r}
 uczacy <- window(bezrobocie, 
                  end = c(rokStop - 1, f))
-treningowy <- window(bezrobocie,
+testowy <- window(bezrobocie,
                      start = c(rokStop, 1))
 ```
 
 Wspólny wykres:
 ```{r}
-ts.plot(uczacy, treningowy, col = c(brewer.pal(n = 4, name = "PRGn")[1], "red"))
+ts.plot(uczacy, testowy, col = c(brewer.pal(n = 4, name = "PRGn")[1], "red"))
 ```
 
 
@@ -220,7 +222,7 @@ modele <- list(ma = ma,
                arima = arima,
                box_cox = arima_bc)
 
-predykcje <- lapply(modele, function(x) forecast(x, h = length(treningowy)))
+predykcje <- lapply(modele, function(x) forecast(x, h = length(testowy)))
 
 ```
 
@@ -230,7 +232,7 @@ Zobaczmy jak nasze predykcje wyglądają na wykresach:
 par(mfrow = c(4, 1))
 for (i in 1:4) {
     plot(predykcje[[i]], col = c(brewer.pal(n = 4, name = "PRGn")[1]))
-    lines(treningowy, col = "red")
+    lines(testowy, col = "red")
 }
 par(mfrow = c(1, 1))
 ```
@@ -245,9 +247,9 @@ for (i in 1:4) {
     plot(predykcje[[i]][["mean"]], 
          col = c(brewer.pal(n = 4, name = "PRGn")[1]), 
          ylab = paste("predykcja", i), 
-         ylim = c(min(min(predykcje[[i]][["mean"]], treningowy)), 
-                  max(predykcje[[i]][["mean"]], max(treningowy))))
-    lines(treningowy, 
+         ylim = c(min(min(predykcje[[i]][["mean"]], testowy)), 
+                  max(predykcje[[i]][["mean"]], max(testowy))))
+    lines(testowy, 
           col = "red")
 }
 par(mfrow = c(1, 1))
@@ -257,8 +259,8 @@ Porównajmy teraz pierwiastki z błędów średniokwadratowych (RMSE) oraz staty
 Theila.
 
 ```{r}
-bledy <- sapply(predykcje, function(x) rmse(treningowy, x$mean))
-wyniki_theil <- sapply(predykcje, function(x) theil(treningowy, x$mean))
+bledy <- sapply(predykcje, function(x) rmse(testowy, x$mean))
+wyniki_theil <- sapply(predykcje, function(x) theil(testowy, x$mean))
 podsumowanie <- data.frame(bledy = bledy, 
                            theil = wyniki_theil)
 podsumowanie
@@ -267,5 +269,38 @@ podsumowanie
 
 Widzimy zatem, że najlepsze predykcje zostały dokonane poprzez użycie modelu 
 ARIMA oraz modelu ARIMA z transformacją Boxa-Coxa. Błąd wygenerowany przez 
-prognozę ARIMA jest zdecydowanie najmniejszy i dokonuje najlepszej prognozy
-na wybranym zbiorze.
+prognozę ARIMA jest najmniejszy i dokonuje najlepszej prognozy
+na wybranym zbiorze. Jednakże wartości statystyk Theila mówią nam, że prognozy
+są gorsze od prognoz naiwnych. Spróbujmy zatem stworzyć jeszcze jeden model
+ARIMA, który zachowa wygenerowaną sezonowość ale uwzględni wyższe wartości `p`
+i `q` niż w `auto.arima`.
+
+```{r}
+arima_f <- Arima(uczacy, 
+                 order = c(p, d, q), 
+                 seasonal = c(0, 1, 1))
+summary(arima_f)
+```
+
+Zobaczmy teraz jak predykcje dokonane przez nowy model będą wyglądały na
+wykresie.
+
+```{r}
+predykcja_f <- forecast(arima_f, h = length(testowy))
+plot(predykcja_f, 
+     col = c(brewer.pal(n = 4, name = "PRGn")[1]))
+lines(testowy, 
+      col = "red")
+```
+
+Na koniec sprawdźmy, czy błąd rmse i statystyka Theila będą miały korzystniejsze
+wartości.
+```{r}
+podsumowanie_f <- c("rmse" = rmse(testowy, predykcja_f$mean), 
+                    "Theil" = theil(testowy, predykcja_f$mean))
+podsumowanie_f
+```
+
+Widzimy zatem, że model z uwzględnioną sezonowością i wyższymi parametrami 
+`p` i `q` daje nam zdecydowanie lepsze predykcje. Wartość statystyki Theila
+potwierdza, że ten model jest skuteczniejszy od prognozy naiwnej.
