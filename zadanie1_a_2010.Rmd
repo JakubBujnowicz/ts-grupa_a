@@ -36,8 +36,8 @@ Ustalmy wariant, który weźmiemy pod uwagę oraz zakres lat, dla których
 przeprowadzimy analizę.
 
 ```{r}
-bezrobocie_typ <- "b"
-rokStart <- 1990
+bezrobocie_typ <- "a"
+rokStart <- 2000
 rokStop <- 2010
 
 sciezka_pliku <- paste0("dane/bezrobocie_",
@@ -74,7 +74,9 @@ f <- 12
 
 Ponieważ analizować będziemy dane z okresu `r rokStart` do `r rokStop` 
 przekształćmy odpowienio dane, definiując szereg czasowy opisujący nasze 
-zjawisko. Następnie narysujmy dla niego podstawowe wykresy. 
+zjawisko.  Następnie narysujmy dla niego podstawowe wykresy.
+Dane od 1990 do początku `r rokStart` zostają pominięte w zbiorze
+uczącym, ponieważ znaczaco obniżają jakość prognozy.
 
 ```{r}
 bezrobocie <- ts(dane$Wartosc, 
@@ -100,15 +102,7 @@ i sezonowość. Dodatkowo możemy wyciągnąć wnioski dotyczące stacjonarnośc
 
 [comment]: <> (Tutaj wnioski o trendach, sezonowości, stacjonarności)
 
-Z powyższych wykresów wynika, iż analizowane dane cechują się wahaniami sezonowymi, nie wykazują się jednak tendencją rozwojową. Brak jest wyraźnego trendu rosnącego czy malejącego (tzw. trend boczny). 
-
-Wyznaczenie ACF dla próby jest pierwszym z dobrze opisanych matematycznie sposobów na określenie, czy szereg ma cechy stacjonarnosci. Wartości ACF powinny zbiegać do 0 w miarę wzrostu czasu, dla dowolnych szeregów czasowych - dla stacjonarnych szeregów czasowych zbiezność ta powinna być znacząco szybsza. Analizując wykres dochodzimy do wniosku, że możemy mieć podstawy do orzucenia hipotezy o słabej stacjonarności szeregu. Skorzystajmy z testu KPSS (od nazwisk Kwiatkowski–Phillips–Schmidt–Shin), który sprawdza hipotezę zerową o stacjonarności szeregu czasowego. 
-
-```{r}
-kpss.test(bezrobocie)
-```
-
-Jak widać, obliczona wartość statystyki (KPSS Level = 0.30516) jest większa niż wartość krytyczna. Zatem hipotezę zerową o stacjonarności 4FM należy odrzucić. 
+Z powyższych wykresów wynika, iż analizowane dane cechują się wahaniami sezonowymi, nie wykazują się jednak tendencją rozwojową. Brak jest wyraźnego trendu rosnącego czy malejącego ( występuje tzw. trend boczny). 
 
 Znając podstawowe własności analizowanego szeregu przejdźmy do dalszej - 
 dokładniejszej analizy.
@@ -127,13 +121,7 @@ Narysujmy wykresy przestawiające zróżnicowane dane.
 tsdisplay(nsc, col = brewer.pal(n = 4, name = "PRGn")[1])
 ```
 
-Sprawdźmy założenie dotyczące słabej stacjonarności - na wykresach wygląda nieźle.
-
-```{r}
-kpss.test(nsc)
-```
-
-Test KPPS również lepiej. Przejdźmy do dalszej analizy.
+Przejdźmy do dalszej analizy.
 
 Wprowadźmy parametr q, który odpowiada wartościom istotnie róznym od zera na 
 wykresie ACF oraz parametr p, który odpowiada wartościom istotnie róznym od 
@@ -141,7 +129,7 @@ zera na wykresie PACF. Potraktujmy je chwilowo jako "czarną skrzynkę". Okażą
 się one przydatne na dalszym etapie analizy.
 
 ```{r}
-q <- 17
+q <- 2
 p <- 9
 ```
 
@@ -285,4 +273,6 @@ podsumowanie
 
 [comment]: <> (Wnioski z predykcji)
 
-Na podstawie wykresów możemy wnioskować, iż modele predykcyjne 3 i 4 zachowują się lepiej w stosunku do pozostałych, należy jednak zadać pytanie - który z nich niesie ze sobą mniejszy (właściwie najmniejszy) błąd. Na podstawie powyższych wartości zawartych w tabeli wnioskujemy, że jest to model wykorzystujący Transformację Boxa-Coxa. Analogicznie - najmniej wiarygodnym modelem jest MA.
+Na podstawie wykresów możemy wnioskować, iż modele predykcyjne 3 i 4 zachowują się lepiej w stosunku do
+pozostałych (analizując kszałt). Należy jednak zadać pytanie - który z modeli niesie ze sobą najmniejszy błąd. 
+Na podstawie powyższych wartości zawartych w tabeli wnioskujemy, że jest to model AR.
