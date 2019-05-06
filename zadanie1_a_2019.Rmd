@@ -246,7 +246,7 @@ arima_bc <- auto.arima(uczacy,
 summary(arima_bc)
 ```
 
-Dokonajmy teraz predykcji na zbiorze treningowym, aby móc potem rozstrzygnąć, 
+Dokonajmy teraz predykcji na zbiorze testowym, aby móc potem rozstrzygnąć, 
 który z modeli najlepiej radzi sobie z naszymi danymi.
 
 ```{r}

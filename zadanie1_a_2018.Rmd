@@ -137,13 +137,13 @@ naszym zbiorem testowym. Wcześniejsze dane będą zbiorem treningowym.
 ```{r}
 uczacy <- window(bezrobocie, 
                  end = c(rokStop - 1, f))
-treningowy <- window(bezrobocie,
+testowy <- window(bezrobocie,
                      start = c(rokStop, 1))
 ```
 
 Wspólny wykres:
 ```{r}
-ts.plot(uczacy, treningowy, col = c(brewer.pal(n = 4, name = "PRGn")[1], "red"))
+ts.plot(uczacy, testowy, col = c(brewer.pal(n = 4, name = "PRGn")[1], "red"))
 ```
 
 
@@ -211,7 +211,7 @@ arima_bc <- auto.arima(uczacy,
 summary(arima_bc)
 ```
 
-Dokonajmy teraz predykcji na zbiorze treningowym, aby móc potem rozstrzygnąć, 
+Dokonajmy teraz predykcji na zbiorze testowym, aby móc potem rozstrzygnąć, 
 który z modeli najlepiej radzi sobie z naszymi danymi.
 
 ```{r}
@@ -220,7 +220,7 @@ modele <- list(ma = ma,
                arima = arima,
                box_cox = arima_bc)
 
-predykcje <- lapply(modele, function(x) forecast(x, h = length(treningowy)))
+predykcje <- lapply(modele, function(x) forecast(x, h = length(testowy)))
 
 ```
 
@@ -230,7 +230,7 @@ Zobaczmy jak nasze predykcje wyglądają na wykresach:
 par(mfrow = c(4, 1))
 for (i in 1:4) {
     plot(predykcje[[i]], col = c(brewer.pal(n = 4, name = "PRGn")[1]))
-    lines(treningowy, col = "red")
+    lines(testowy, col = "red")
 }
 par(mfrow = c(1, 1))
 ```
@@ -245,9 +245,9 @@ for (i in 1:4) {
     plot(predykcje[[i]][["mean"]], 
          col = c(brewer.pal(n = 4, name = "PRGn")[1]), 
          ylab = paste("predykcja", i), 
-         ylim = c(min(min(predykcje[[i]][["mean"]], treningowy)), 
-                  max(predykcje[[i]][["mean"]], max(treningowy))))
-    lines(treningowy, 
+         ylim = c(min(min(predykcje[[i]][["mean"]], testowy)), 
+                  max(predykcje[[i]][["mean"]], max(testowy))))
+    lines(testowy, 
           col = "red")
 }
 par(mfrow = c(1, 1))
@@ -257,8 +257,8 @@ Porównajmy teraz pierwiastki z błędów średniokwadratowych (RMSE) oraz staty
 Theila.
 
 ```{r}
-bledy <- sapply(predykcje, function(x) rmse(treningowy, x$mean))
-wyniki_theil <- sapply(predykcje, function(x) theil(treningowy, x$mean))
+bledy <- sapply(predykcje, function(x) rmse(testowy, x$mean))
+wyniki_theil <- sapply(predykcje, function(x) theil(testowy, x$mean))
 podsumowanie <- data.frame(bledy = bledy, 
                            theil = wyniki_theil)
 podsumowanie
